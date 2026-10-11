@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PlantGuard AI — Plant Disease Scanner &amp; Clinical Prescription</title>
+  <meta name="description" content="AI-powered plant leaf disease detection, non-leaf image rejection, and clinical fertilizer recommendations using Classical ML." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+
+  <!-- Ambient background glow -->
+  <div class="ambient-glow" aria-hidden="true"></div>
+
+  <!-- Header -->
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="brand-wrap">
+        <span class="brand-icon">🌿</span>
+        <span class="brand-title">PlantGuard <span class="brand-badge">AI</span></span>
+      </div>
+      <nav class="nav-links">
+        <a href="{{ url_for('index') }}" class="nav-link active">🔬 Scanner</a>
+        <a href="{{ url_for('charts') }}" class="nav-link">📊 Model Charts</a>
+      </nav>
+      <div class="header-status">
+        <span class="status-indicator"></span>
+        <span class="status-text">ML Engine Online</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <div class="container">
+
+      <!-- Flash Messages -->
+      {% with messages = get_flashed_messages(with_categories=True) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="flash flash--{{ category }}" role="alert">
+              <span>{{ '⚠️' if category == 'error' else 'ℹ️' }}</span> {{ message }}
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <!-- Hero Section -->
+      <section class="hero-section">
+        <div class="hero-badge">
+          <span>🔬 Classical ML &bull; OpenCV &bull; Botanical Vision Engine</span>
+        </div>
+        <h1 class="hero-title">
+          Plant Disease Detection <span class="text-gradient">&amp; Agronomy Rx</span>
+        </h1>
+        <p class="hero-sub">
+          Upload or capture a leaf photo. Our multi-spectral computer vision strictly filters non-leaf images,
+          diagnoses bacterial/fungal blights, highlights lesion heatmaps, and prescribes clinical fertilizer protocols.
+        </p>
+
+        {% if not model_ready %}
+          <div class="alert-box alert-box--warning">
+            <strong>⚠ Classifier not trained.</strong>
+            Run <code>python train_model.py</code> in terminal to initialize model weights.
+          </div>
+        {% endif %}
+      </section>
+
+      <!-- Main Interaction Card with Multi-Mode Tabs -->
+      <section class="card scanner-card">
+
+        <!-- Mode Navigation Tabs -->
+        <div class="mode-tabs" role="tablist">
+          <button type="button" class="mode-tab active" id="tab-upload" data-panel="panel-upload" role="tab">
+            📁 Upload Leaf Photo
+          </button>
+          <button type="button" class="mode-tab" id="tab-camera" data-panel="panel-camera" role="tab">
+            📷 Live Webcam Scanner
+          </button>
+          <button type="button" class="mode-tab" id="tab-samples" data-panel="panel-samples" role="tab">
+            🧪 Sample Test Bench
+          </button>
+        </div>
+
+        <!-- ── PANEL 1: File Upload Form ── -->
+        <div class="tab-panel active" id="panel-upload" role="tabpanel">
+          <form id="upload-form" action="{{ url_for('predict') }}" method="POST" enctype="multipart/form-data">
+            
+            <div id="drop-zone" class="drop-zone" role="button" tabindex="0" aria-label="Drop leaf image here or click to browse">
+              <div class="drop-zone__content">
+                <div class="drop-icon-pulse">
+                  <span class="drop-icon">🍃</span>
+                </div>
+                <h3 class="drop-title">Drag &amp; drop your plant leaf photo here</h3>
+                <p class="drop-sub">or <span class="drop-browse">browse files</span> from your device</p>
+                <div class="drop-specs">
+                  <span>JPG, PNG, WEBP</span>
+                  <span>&bull;</span>
+                  <span>Strict Leaf Verification</span>
+                  <span>&bull;</span>
+                  <span>Max 15 MB</span>
+                </div>
+              </div>
+              <input type="file" id="file-input" name="file" accept=".jpg,.jpeg,.png,.bmp,.webp" class="file-input" />
+            </div>
+
+            <!-- Preview Card -->
+            <div id="preview-area" class="preview-area hidden">
+              <div class="preview-thumb-wrap">
+                <img id="preview-img" src="" alt="Selected leaf preview" class="preview-img" />
+              </div>
+              <div class="preview-meta">
+                <strong id="file-name" class="preview-filename">leaf_sample.jpg</strong>
+                <span id="file-size" class="preview-filesize">2.4 MB</span>
+                <span class="preview-badge">Ready for Botanical Scan</span>
+                <button type="button" id="clear-btn" class="btn btn--sm btn--ghost">✕ Remove</button>
+              </div>
+            </div>
+
+            <!-- Scanning Progress Indicator -->
+            <div id="progress-wrap" class="progress-wrap hidden">
+              <div class="progress-indicator-track">
+                <div class="progress-indicator-bar" id="progress-bar"></div>
+              </div>
+              <div class="progress-status-row">
+                <span class="progress-pulse-dot"></span>
+                <span class="progress-label" id="progress-label">Verifying botanical leaf signatures &amp; extracting 114 ML features...</span>
+              </div>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" id="submit-btn" class="btn btn--primary btn--full btn--lg" {% if not model_ready %}disabled{% endif %}>
+              🔬 Diagnose Leaf &amp; Prescribe Treatment
+            </button>
+          </form>
+        </div>
+
+        <!-- ── PANEL 2: Live Webcam Scanner ── -->
+        <div class="tab-panel" id="panel-camera" role="tabpanel">
+          <div class="camera-module">
+            <div class="camera-viewport-wrap">
+              <video id="webcam-video" autoplay playsinline muted class="camera-video"></video>
+              <canvas id="webcam-canvas" class="hidden"></canvas>
+              
+              <!-- Reticle Target Overlay -->
+              <div class="camera-reticle" id="camera-reticle">
+                <div class="reticle-leaf-shape"></div>
+                <span class="reticle-hint">Align leaf blade inside frame</span>
+              </div>
+
+              <!-- Camera status overlay -->
+              <div id="camera-placeholder" class="camera-placeholder">
+                <span class="camera-placeholder-icon">📷</span>
+                <h3>Webcam Scanner</h3>
+                <p>Click below to grant camera access and scan your plant leaf in real time.</p>
+                <button type="button" id="start-camera-btn" class="btn btn--primary">
+                  Start Camera
+                </button>
+              </div>
+
+              <!-- Flash animation element -->
+              <div id="camera-flash" class="camera-flash"></div>
+            </div>
+
+            <div class="camera-controls hidden" id="camera-controls">
+              <button type="button" id="flip-camera-btn" class="btn btn--secondary btn--sm">
+                🔄 Switch Camera
+              </button>
+              <button type="button" id="snap-btn" class="btn btn--primary btn--lg">
+                📸 Snap &amp; Diagnose
+              </button>
+              <button type="button" id="stop-camera-btn" class="btn btn--ghost btn--sm">
+                ✕ Close Camera
+              </button>
+            </div>
+
+            <!-- Hidden camera form -->
+            <form id="camera-form" action="{{ url_for('predict') }}" method="POST">
+              <input type="hidden" name="camera_data" id="camera-data-input" />
+            </form>
+          </div>
+        </div>
+
+        <!-- ── PANEL 3: Instant Sample Test Bench ── -->
+        <div class="tab-panel" id="panel-samples" role="tabpanel">
+          <div class="samples-header">
+            <h3>Test Bench &bull; Verified Diagnostic Samples</h3>
+            <p>Click any card to immediately run the diagnosis pipeline, test non-leaf rejection, or view lesion heatmaps.</p>
+          </div>
+
+          <div class="samples-grid">
+            {% for s in samples %}
+            <a href="{{ url_for('predict_sample', sample_id=s.id) }}" class="sample-card {% if s.id == 'non_leaf_sample' %}sample-card--reject{% endif %}">
+              <div class="sample-card__media">
+                <img src="{{ s.img }}" alt="{{ s.name }}" loading="lazy" />
+                <span class="sample-tag">{{ s.tag }}</span>
+              </div>
+              <div class="sample-card__body">
+                <h4 class="sample-title">{{ s.name }}</h4>
+                <p class="sample-desc">{{ s.desc }}</p>
+                <div class="sample-card__action">
+                  <span>{% if s.id == 'non_leaf_sample' %}Test Rejection ➔{% else %}Run Scan ➔{% endif %}</span>
+                </div>
+              </div>
+            </a>
+            {% endfor %}
+          </div>
+        </div>
+
+      </section>
+
+      <!-- How It Works Section -->
+      <section class="how-it-works-section">
+        <h2 class="section-title">Clinical Diagnostic Pipeline</h2>
+        <div class="steps-grid">
+          <div class="step-card">
+            <span class="step-number">01</span>
+            <div class="step-icon-wrap">🛡️</div>
+            <h3>Botanical Validation</h3>
+            <p>Multi-spectral dermatological &amp; packaging filters strictly reject non-leaf pictures, portraits, and artificial products.</p>
+          </div>
+
+          <div class="step-card">
+            <span class="step-number">02</span>
+            <div class="step-icon-wrap">🔬</div>
+            <h3>Lesion Heatmap</h3>
+            <p>Excess Green (ExG) index and necrotic clustering isolate pathogens and calculate exact surface severity percentage.</p>
+          </div>
+
+          <div class="step-card">
+            <span class="step-number">03</span>
+            <div class="step-icon-wrap">🤖</div>
+            <h3>Classical ML Inference</h3>
+            <p>Extracts 114 color, GLCM texture, and contour shape descriptors. Tuned Random Forest, SVM &amp; KNN classify the disease.</p>
+          </div>
+
+          <div class="step-card">
+            <span class="step-number">04</span>
+            <div class="step-icon-wrap">℞</div>
+            <h3>Agronomic Prescription</h3>
+            <p>Prescribes tailored NPK fertilizer ratios, organic bio-fungicides, voice audio readout, and printable Rx certificate.</p>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-content">
+      <div class="footer-brand">
+        <strong>PlantGuard AI</strong> &mdash; Classical Machine Learning &bull; OpenCV &bull; Flask
+      </div>
+      <div class="footer-links">
+        <a href="{{ url_for('charts') }}">Model Evaluation Charts</a>
+        <span>&bull;</span>
+        <a href="#samples">Sample Library</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

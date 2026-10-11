@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ fertilizer.title }} — PlantGuard AI Diagnosis</title>
+  <meta name="description" content="Clinical plant disease diagnosis and agronomic fertilizer prescription by PlantGuard AI." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <style>
+    /* Dynamic server tokens */
+    :root {
+      --diag-color: {{ fertilizer.color }};
+      --diag-conf-pct: {{ confidence }}%;
+      --diag-sev-pct: {{ severity_pct }}%;
+    }
+  </style>
+</head>
+<body data-speech-text="{{ speech_text }}">
+
+  <!-- Ambient background glow -->
+  <div class="ambient-glow" aria-hidden="true"></div>
+
+  <!-- Header -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="{{ url_for('index') }}" class="brand-wrap">
+        <span class="brand-icon">🌿</span>
+        <span class="brand-title">PlantGuard <span class="brand-badge">AI</span></span>
+      </a>
+      <nav class="nav-links">
+        <a href="{{ url_for('index') }}" class="nav-link">🔬 Scanner</a>
+        <a href="{{ url_for('charts') }}" class="nav-link">📊 Model Charts</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <div class="container">
+
+      <!-- Breadcrumb & Rx Header Bar -->
+      <div class="report-header-bar">
+        <div class="report-meta">
+          <span class="rx-pill">{{ rx_id }}</span>
+          <span class="report-date">{{ date_str }}</span>
+          <span class="report-file">📄 {{ original_name }}</span>
+        </div>
+        <div class="report-actions">
+          <button type="button" id="voice-btn" class="btn btn--sm btn--glass" title="Listen to spoken audio diagnosis">
+            <span id="voice-icon">🔊</span> <span id="voice-text">Listen to Diagnosis</span>
+          </button>
+          <button type="button" id="print-rx-btn" class="btn btn--sm btn--secondary">
+            🖨️ Print Rx Certificate
+          </button>
+          <a href="{{ url_for('index') }}" class="btn btn--sm btn--primary">
+            + New Scan
+          </a>
+        </div>
+      </div>
+
+      <!-- Main Diagnosis Grid -->
+      <div class="diagnosis-grid">
+
+        <!-- ── Left Column: Multi-View Bio-Optical Inspector ── -->
+        <section class="card inspector-card">
+          <div class="inspector-card__header">
+            <div>
+              <h2 class="card-title">Bio-Optical Inspector</h2>
+              <p class="card-sub">Multi-spectral leaf surface pathology analysis</p>
+            </div>
+            
+            <!-- View Selector Tabs -->
+            <div class="view-tabs" role="tablist">
+              <button type="button" class="view-tab active" data-target="orig" id="tab-orig" role="tab">
+                🌿 Original
+              </button>
+              <button type="button" class="view-tab" data-target="lesions" id="tab-lesions" role="tab">
+                🔴 Lesions Heatmap
+              </button>
+              <button type="button" class="view-tab" data-target="exg" id="tab-exg" role="tab">
+                🟢 Chlorophyll ExG
+              </button>
+            </div>
+          </div>
+
+          <!-- Interactive Viewport -->
+          <div class="inspector-viewport" id="viewport-wrap">
+            <img src="{{ image_url }}" alt="Original Leaf" id="view-img-orig" class="inspector-img active" />
+            <img src="{{ lesion_url }}" alt="Lesions Heatmap" id="view-img-lesions" class="inspector-img" />
+            <img src="{{ exg_url }}" alt="Chlorophyll Bio-Map" id="view-img-exg" class="inspector-img" />
+            
+            <!-- HUD Overlays -->
+            <div class="viewport-hud-tag" id="viewport-hud-tag">
+              <span>View:</span> <strong id="hud-mode-name">Original Photograph</strong>
+            </div>
+          </div>
+
+          <!-- Inspector Legend / Quick Telemetry -->
+          <div class="inspector-telemetry">
+            <div class="telemetry-box">
+              <span class="telemetry-label">Damaged Surface</span>
+              <strong class="telemetry-val" style="color: {{ severity_color }};">{{ severity_pct }}%</strong>
+            </div>
+            <div class="telemetry-box">
+              <span class="telemetry-label">Active Chlorophyll</span>
+              <strong class="telemetry-val" style="color: #10b981;">{{ visual_meta.chlorophyll_active_pct }}%</strong>
+            </div>
+            <div class="telemetry-box">
+              <span class="telemetry-label">Lesion Clusters</span>
+              <strong class="telemetry-val">{{ visual_meta.lesion_cluster_count }}</strong>
+            </div>
+            <div class="telemetry-box">
+              <span class="telemetry-label">Botanical Purity</span>
+              <strong class="telemetry-val">100% Verified</strong>
+            </div>
+          </div>
+
+          <!-- Toggle description caption -->
+          <p class="inspector-caption" id="inspector-caption">
+            Displaying high-definition original leaf photograph. Toggle tabs above to view highlighted infection lesions or vegetation density.
+          </p>
+        </section>
+
+        <!-- ── Right Column: Clinical Diagnosis & Prescription ── -->
+        <section class="card prescription-card">
+
+          <!-- Pathogen Badge -->
+          <div class="diagnosis-badge-banner {{ fertilizer.badge_class }}">
+            <div class="badge-icon-wrap">{{ fertilizer.icon }}</div>
+            <div class="badge-text-wrap">
+              <span class="badge-urgency-tag">{{ fertilizer.urgency }}</span>
+              <h1 class="badge-disease-title">{{ fertilizer.title }}</h1>
+              <span class="badge-scientific-name"><em>{{ fertilizer.scientific }}</em></span>
+            </div>
+          </div>
+
+          <!-- ML Model Confidence Bar -->
+          <div class="telemetry-card">
+            <div class="telemetry-header">
+              <span class="telemetry-title">Classifier Confidence (Random Forest)</span>
+              <strong class="telemetry-score" style="color: {{ fertilizer.color }};">{{ confidence }}%</strong>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill" style="width: {{ confidence }}%; background: {{ fertilizer.color }};"></div>
+            </div>
+
+            <!-- Multi-Class Probability Distribution -->
+            <div class="prob-distribution">
+              <span class="prob-dist-label">Model Vote Breakdown:</span>
+              <div class="prob-pills">
+                {% for cname, cpct in probabilities.items() %}
+                <div class="prob-pill {% if cname == prediction %}prob-pill--winner{% endif %}">
+                  <span class="prob-pill-name">{{ cname | replace('_', ' ') }}</span>
+                  <strong class="prob-pill-val">{{ cpct }}%</strong>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+
+          <!-- Infection Severity Meter -->
+          <div class="telemetry-card">
+            <div class="telemetry-header">
+              <span class="telemetry-title">Pathological Tissue Severity</span>
+              <strong class="telemetry-score" style="color: {{ severity_color }};">{{ severity_grade }}</strong>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill" style="width: {{ severity_pct }}%; background: {{ severity_color }};"></div>
+            </div>
+            <p class="telemetry-subtext">
+              {% if prediction == 'Healthy' %}
+                Leaf epidermis and parenchyma exhibit optimal photosynthetic health with no pathogenic lesions.
+              {% else %}
+                Approximately {{ severity_pct }}% of the leaf blade surface area displays chlorosis or necrotic tissue damage.
+              {% endif %}
+            </p>
+          </div>
+
+          <!-- Clinical Prescription Box -->
+          <div class="prescription-box" style="border-left-color: {{ fertilizer.color }};">
+            <div class="rx-header">
+              <span class="rx-symbol">℞</span>
+              <div>
+                <h2 class="rx-title">Recommended Agronomy Prescription</h2>
+                <span class="rx-subtitle">{{ fertilizer.name }}</span>
+              </div>
+            </div>
+
+            <div class="rx-body">
+              <div class="rx-section">
+                <strong>📋 Diagnostic Summary:</strong>
+                <p>{{ fertilizer.summary }}</p>
+              </div>
+
+              <div class="rx-section">
+                <strong>💧 Application Protocol:</strong>
+                <p>{{ fertilizer.application }}</p>
+              </div>
+
+              <div class="rx-section">
+                <strong>🌱 Organic &amp; Biological Alternatives:</strong>
+                <p>{{ fertilizer.organic }}</p>
+              </div>
+
+              <div class="rx-section">
+                <strong>✂️ Immediate Action Required:</strong>
+                <p>{{ fertilizer.action }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="card-btn-stack">
+            <a href="#agronomist" class="btn btn--secondary btn--full" id="ask-doc-btn">
+              💬 Consult AI Agronomist About This Treatment
+            </a>
+          </div>
+
+        </section>
+
+      </div>
+
+      <!-- ── AI Agronomist Interactive Q&A Section ── -->
+      <section class="card agronomist-section" id="agronomist">
+        <div class="agronomist-header">
+          <div class="doc-avatar">🩺</div>
+          <div>
+            <h2 class="agronomist-title">Plant Doctor &amp; Agronomy Consultant</h2>
+            <p class="agronomist-sub">Ask specific dosage questions, organic formulas, or watering schedules for {{ fertilizer.title }}.</p>
+          </div>
+        </div>
+
+        <!-- Quick Question Chips -->
+        <div class="faq-chips">
+          <button type="button" class="faq-chip" data-q="What is the exact fertilizer dosage for {{ fertilizer.title }}?">
+            💊 Fertilizer Dosage Calculator
+          </button>
+          <button type="button" class="faq-chip" data-q="What is the proper watering protocol to prevent fungal spread?">
+            💧 Watering Protocol
+          </button>
+          <button type="button" class="faq-chip" data-q="What organic neem oil spray recipe can I use?">
+            🌱 Organic Spray Formula
+          </button>
+          <button type="button" class="faq-chip" data-q="How do I safely prune infected leaves?">
+            ✂️ Pruning Guidelines
+          </button>
+        </div>
+
+        <!-- Chat Conversation Area -->
+        <div class="chat-thread" id="chat-thread">
+          <div class="chat-msg chat-msg--assistant">
+            <div class="chat-bubble">
+              Hello! I am your AI Agronomist. Based on your scan of <strong>{{ fertilizer.title }}</strong>, 
+              how can I help you care for your crop? You can ask about fertilizer dosing, preventative crop rotation, or organic fungicides.
+            </div>
+          </div>
+        </div>
+
+        <!-- Chat Input Form -->
+        <form class="chat-form" id="chat-form">
+          <input type="text" id="chat-input" class="chat-input" placeholder="Ask about dosage, neem spray, watering schedule..." required />
+          <button type="submit" class="btn btn--primary" id="chat-send-btn">Ask Doctor</button>
+        </form>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- ── Printable Medical Certificate (Hidden until print requested) ── -->
+  <div class="printable-certificate" id="printable-certificate" aria-hidden="true">
+    <div class="cert-header">
+      <div class="cert-brand">
+        <h1>PlantGuard AI Clinical Pathology</h1>
+        <p>Certified Classical Machine Learning Diagnostic Report</p>
+      </div>
+      <div class="cert-rx-badge">
+        <strong>{{ rx_id }}</strong>
+        <span>{{ date_str }}</span>
+      </div>
+    </div>
+
+    <hr class="cert-divider" />
+
+    <div class="cert-body">
+      <div class="cert-row">
+        <div><strong>Specimen:</strong> {{ original_name }}</div>
+        <div><strong>Patient Status:</strong> {{ fertilizer.urgency }}</div>
+      </div>
+      <div class="cert-row">
+        <div><strong>Pathological Diagnosis:</strong> {{ fertilizer.title }} (<em>{{ fertilizer.scientific }}</em>)</div>
+        <div><strong>Model Confidence:</strong> {{ confidence }}%</div>
+      </div>
+      <div class="cert-row">
+        <div><strong>Infection Severity:</strong> {{ severity_grade }} ({{ visual_meta.lesion_cluster_count }} lesion clusters)</div>
+        <div><strong>Photosynthetic Health:</strong> {{ visual_meta.chlorophyll_active_pct }}% Active</div>
+      </div>
+
+      <div class="cert-box">
+        <h3>Prescribed Treatment: {{ fertilizer.name }}</h3>
+        <p><strong>Application:</strong> {{ fertilizer.application }}</p>
+        <p><strong>Organic Option:</strong> {{ fertilizer.organic }}</p>
+        <p><strong>Action Steps:</strong> {{ fertilizer.action }}</p>
+      </div>
+    </div>
+
+    <div class="cert-footer">
+      <div class="cert-stamp">
+        <span>✓ VERIFIED DIGITAL PATHOLOGY</span>
+        <span>PlantGuard Automated Classical ML Engine</span>
+      </div>
+      <div class="cert-notice">
+        Generated electronically. Valid for commercial &amp; home horticultural management.
+      </div>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="container footer-content">
+      <p>PlantGuard AI &mdash; Classical Machine Learning &amp; Computer Vision Agronomy</p>
+    </div>
+  </footer>
+
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Non-Leaf Image Detected — PlantGuard AI</title>
+  <meta name="description" content="Plant leaf verification rejected the uploaded non-leaf image." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+
+  <!-- Background decorative glow -->
+  <div class="ambient-glow" aria-hidden="true"></div>
+
+  <!-- Header -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="{{ url_for('index') }}" class="brand-wrap">
+        <span class="brand-icon">🌿</span>
+        <span class="brand-title">PlantGuard <span class="brand-badge">AI</span></span>
+      </a>
+      <nav class="nav-links">
+        <a href="{{ url_for('index') }}" class="nav-link active">🔬 Scanner</a>
+        <a href="{{ url_for('charts') }}" class="nav-link">📊 Model Charts</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <div class="container container--sm">
+
+      <!-- Rejection Card -->
+      <div class="card rejection-card">
+        <div class="rejection-icon-wrap">
+          <span class="rejection-emoji">🚫</span>
+        </div>
+
+        <span class="status-pill status-pill--danger">Verification Failed</span>
+        <h1 class="rejection-title">Not a Plant Leaf Detected</h1>
+        
+        <p class="rejection-desc">
+          {{ error.message }}
+        </p>
+
+        {% if error.metrics %}
+        <div class="metrics-panel">
+          <h2 class="metrics-panel__title">Optical &amp; Botanical Telemetry</h2>
+          <div class="metrics-grid">
+            <div class="metric-item">
+              <span class="metric-label">Plant Foliage Coverage</span>
+              <span class="metric-val metric-val--bad">{{ error.metrics.plant_coverage_pct or 0 }}%</span>
+            </div>
+            <div class="metric-item">
+              <span class="metric-label">Green Chlorophyll</span>
+              <span class="metric-val">{{ error.metrics.green_foliage_pct or 0 }}%</span>
+            </div>
+            <div class="metric-item">
+              <span class="metric-label">Human / Skin Presence</span>
+              <span class="metric-val">{{ error.metrics.skin_presence_pct or 0 }}%</span>
+            </div>
+            <div class="metric-item">
+              <span class="metric-label">Optical Sharpness</span>
+              <span class="metric-val">{{ error.metrics.sharpness_score or 0 }}</span>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        <div class="guide-box">
+          <h3 class="guide-box__title">💡 How to take a scannable leaf photo:</h3>
+          <ul class="guide-list">
+            <li><strong>Isolate one leaf:</strong> Place the leaf flat against a neutral background or photograph directly on the branch.</li>
+            <li><strong>Fill 60%+ of the frame:</strong> Move closer so leaf venation and lesions are sharply visible.</li>
+            <li><strong>Avoid commercial products:</strong> Do not photograph supplement bottles, packages, documents, or people.</li>
+            <li><strong>Good natural lighting:</strong> Avoid harsh glare, heavy shadows, or digital screen photos.</li>
+          </ul>
+        </div>
+
+        <div class="btn-group">
+          <a href="{{ url_for('index') }}" class="btn btn--primary">
+            📷 Upload Another Image
+          </a>
+          <a href="{{ url_for('index') }}#samples" class="btn btn--secondary">
+            🧪 Try Pre-loaded Samples
+          </a>
+        </div>
+      </div>
+
+      <!-- Quick Sample Tryout Section -->
+      <div class="sample-tryout-section">
+        <h2 class="sample-tryout-title">Or test our verified sample images with 1 click:</h2>
+        <div class="quick-samples-grid">
+          <a href="{{ url_for('predict_sample', sample_id='healthy_leaf') }}" class="quick-sample-card">
+            <img src="{{ url_for('static', filename='samples/healthy_leaf.jpg') }}" alt="Healthy Leaf Sample" />
+            <div class="quick-sample-info">
+              <strong>Healthy Leaf</strong>
+              <span>100% Chlorophyll</span>
+            </div>
+          </a>
+          <a href="{{ url_for('predict_sample', sample_id='early_blight') }}" class="quick-sample-card">
+            <img src="{{ url_for('static', filename='samples/early_blight.jpg') }}" alt="Early Blight Sample" />
+            <div class="quick-sample-info">
+              <strong>Early Blight</strong>
+              <span>Concentric Rings</span>
+            </div>
+          </a>
+          <a href="{{ url_for('predict_sample', sample_id='late_blight') }}" class="quick-sample-card">
+            <img src="{{ url_for('static', filename='samples/late_blight.jpg') }}" alt="Late Blight Sample" />
+            <div class="quick-sample-info">
+              <strong>Late Blight</strong>
+              <span>Water-soaked Spots</span>
+            </div>
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-content">
+      <p>PlantGuard AI &mdash; Classical Machine Learning &amp; Computer Vision Agronomy</p>
+    </div>
+  </footer>
+
+</body>
+</html>

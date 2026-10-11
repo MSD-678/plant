@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Model Charts — PlantGuard AI</title>
+    <meta name="description"
+        content="Model comparison charts and confusion matrices for Random Forest, SVM, and KNN classifiers." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+
+<body>
+
+    <div class="bg-particles" aria-hidden="true">
+        <span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span>
+    </div>
+
+    <header class="site-header">
+        <div class="logo-wrap">
+            <span class="logo-icon">🌿</span>
+            <span class="logo-text">PlantGuard <span class="badge">AI</span></span>
+        </div>
+        <nav>
+            <a href="{{ url_for('index') }}" class="nav-link">Detect</a>
+            <a href="{{ url_for('charts') }}" class="nav-link active">Model Charts</a>
+        </nav>
+    </header>
+
+    <main class="container">
+        <h1 class="hero-title" style="margin-bottom:0.5rem;">Model Comparison</h1>
+        <p class="hero-sub" style="margin-bottom:2.5rem;">
+            Performance metrics and confusion matrices generated after training on the validation set.
+        </p>
+
+        {% if chart_urls %}
+        <div class="charts-grid">
+            {% for url in chart_urls %}
+            <div class="card chart-card">
+                <img src="{{ url }}" alt="Model chart" class="chart-img" />
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="card" style="text-align:center; padding:3rem 2rem;">
+            <p style="font-size:3rem; margin-bottom:1rem;">📊</p>
+            <h2 style="color:var(--text-primary); margin-bottom:0.75rem;">No charts yet</h2>
+            <p style="color:var(--text-muted);">
+                Run <code style="background:var(--surface2); padding:0.2em 0.5em; border-radius:4px;">
+          python train_model.py</code> to generate comparison charts.
+            </p>
+            <a href="{{ url_for('index') }}" class="btn btn--primary" style="margin-top:1.5rem; display:inline-block;">←
+                Back to Upload</a>
+        </div>
+        {% endif %}
+
+    </main>
+
+    <footer class="site-footer">
+        <p>PlantGuard AI — Classical ML · OpenCV · Flask</p>
+    </footer>
+
+</body>
+
+</html>
